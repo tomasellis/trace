@@ -1,15 +1,7 @@
 import CinemaBackground from "../components/CinemaBackground";
 import ImageSearcher from "../components/ImageUpload";
-import SamplesPicker from "../components/SamplesPicker";
 
 export default function Main() {
-    const handlePickSample = (src: string, label: string) => {
-        // TODO: Handle sample selection - this could trigger the image analysis
-        console.log(`Selected sample: ${label} (${src})`)
-        // You can integrate this with the ImageSearcher component
-        // For now, we'll just log the selection
-    }
-
     return (
         <CinemaBackground>
             <main className="min-h-[100dvh] w-full flex items-center justify-center p-4">
@@ -32,8 +24,6 @@ export default function Main() {
                     </footer>
                 </div>
             </main>
-
-            <SamplesPicker onPickSample={handlePickSample} />
         </CinemaBackground>
     )
 }

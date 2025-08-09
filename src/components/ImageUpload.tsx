@@ -42,7 +42,6 @@ export default function ImageSearcher() {
         setStatus("idle")
     }
 
-    // paste support
     usePaste({ handlePasted: handleNewFile, showFlash: () => showFlash("Image pasted. Ready to analyze.") })
 
     const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -79,7 +78,8 @@ export default function ImageSearcher() {
         if (fileInputRef.current) fileInputRef.current.value = ""
     }
 
-    const pickSample = async (src: string, label: string) => {
+    const onPickSample = async (src: string, label: string) => {
+        console.log({ src, label })
         try {
             setStatus("idle")
             setResult(null)
@@ -112,7 +112,7 @@ export default function ImageSearcher() {
 
     return (
         <>
-            <SamplesPicker />
+            <SamplesPicker onPickSample={onPickSample} />
             <section className="relative border border-white/10 bg-white/5 backdrop-blur rounded-xl">
                 <div className="p-5 border-b border-white/10">
                     <h3 className="text-lg font-semibold">Upload or paste an image</h3>

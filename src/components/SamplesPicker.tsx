@@ -20,10 +20,8 @@ export default function SamplesPicker({ onPickSample }: SamplesPickerProps) {
     const samplesPopRef = useRef<HTMLDivElement>(null)
 
     const handlePickSample = (src: string, label: string) => {
-        if (onPickSample) {
-            onPickSample(src, label)
-        }
         setSamplesOpen(false)
+        onPickSample(src, label)
     }
 
     return (
@@ -59,7 +57,7 @@ export default function SamplesPicker({ onPickSample }: SamplesPickerProps) {
                             Close
                         </button>
                     </div>
-                    {/* Responsive grid: 2 columns on mobile, 3 on small screens and up */}
+                    {/* 2 columns on mobile, 3 on small screens and up */}
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                         {SAMPLES.map((s) => (
                             <button
