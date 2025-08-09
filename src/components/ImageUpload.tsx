@@ -1,5 +1,5 @@
 import { Copy, ImageIcon, Loader2, Upload, X } from "lucide-react"
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import usePaste from "../hooks/usePaste"
 import useFlash from "../hooks/useFlash"
 import SamplesPicker from "./SamplesPicker"
@@ -58,9 +58,6 @@ export default function ImageSearcher() {
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [searchLimit, setSearchLimit] = useState(3);
-    const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
-    const [fallbackResults, setFallbackResults] = useState<SearchResult[]>([]);
-
 
     const [flash, showFlash] = useFlash()
 
@@ -138,9 +135,6 @@ export default function ImageSearcher() {
         }
     }
 
-    /**
-     * Perform screenshot search
-     */
     const handleSearch = useCallback(async () => {
         if (!file) {
             setError('Please select a screenshot first');
@@ -150,7 +144,6 @@ export default function ImageSearcher() {
         setIsSearching(true);
         setError(null);
         setSearchResults([]);
-        setFallbackResults([]);
 
         try {
             const formData = new FormData();
@@ -175,8 +168,7 @@ export default function ImageSearcher() {
 
             const data: SearchResponse = await response.json();
             console.log('[ScreenshotSearch] Response:', data);
-            setSearchResults(data.results);
-            setFallbackResults(data.fallback || []);
+            setSearchResults(data.results ? data.results : data.fallback ?? []);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Search failed');
             console.error('[ScreenshotSearch] Fetch error:', err);
@@ -184,6 +176,27 @@ export default function ImageSearcher() {
             setIsSearching(false);
         }
     }, [file, searchLimit, API_URL]);
+
+    useEffect(() => {
+        if (error) {
+            showFlash(error)
+            setError(null)
+        }
+    }, [
+        error
+    ])
+
+    function formatTimestampHMS(seconds: number): string {
+        if (isNaN(seconds) || seconds < 0) return '00:00';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        if (h > 0) {
+            return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
+        } else {
+            return [m, s].map(v => v.toString().padStart(2, '0')).join(':');
+        }
+    }
 
     const dropClasses = useMemo(
         () =>
@@ -208,7 +221,7 @@ export default function ImageSearcher() {
                 </div>
 
                 <div className="p-5">
-                    {/* Unified dropzone + preview box */}
+                    {/* unified dropzone + preview box */}
                     <div
                         role="button"
                         aria-label="Image dropzone"
@@ -222,7 +235,6 @@ export default function ImageSearcher() {
                         onDragLeave={onDragLeave}
                         className={dropClasses}
                     >
-                        {/* Selected image fills the box */}
                         {preview && (
                             <>
                                 <img
@@ -240,7 +252,6 @@ export default function ImageSearcher() {
                                             "linear-gradient(to top, rgba(0,0,0,0.35), rgba(0,0,0,0.0) 30%, rgba(0,0,0,0.0) 70%, rgba(0,0,0,0.25))",
                                     }}
                                 />
-                                {/* Clear */}
                                 <button
                                     type="button"
                                     onClick={(e) => {
@@ -256,7 +267,6 @@ export default function ImageSearcher() {
                             </>
                         )}
 
-                        {/* Instructions when empty */}
                         {!preview && (
                             <div className="relative z-10 flex flex-col items-center gap-3 text-center">
                                 <ImageIcon className="size-6 text-white/60" aria-hidden="true" />
@@ -267,7 +277,7 @@ export default function ImageSearcher() {
                             </div>
                         )}
 
-                        {/* Hidden input */}
+                        {/* hidden input */}
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -281,7 +291,7 @@ export default function ImageSearcher() {
                             }}
                         />
 
-                        {/* Soft inner glow */}
+                        {/* soft inner glow */}
                         <div
                             aria-hidden="true"
                             className="pointer-events-none absolute inset-0 rounded-lg"
@@ -291,7 +301,7 @@ export default function ImageSearcher() {
                         />
                     </div>
 
-                    {/* Uploading */}
+                    {/* uploading */}
                     {status === "uploading" && (
                         <div className="mt-6">
                             <div className="flex items-center gap-2 text-sm text-white/70">
@@ -304,14 +314,14 @@ export default function ImageSearcher() {
                         </div>
                     )}
 
-                    {/* Error */}
+                    {/* error */}
                     {status === "error" && (
                         <div className="mt-6 rounded-md border border-red-500/40 bg-red-500/10 p-3 text-red-200 text-sm">
                             Something went wrong. Please try again, or use a different image.
                         </div>
                     )}
 
-                    {/* Result */}
+                    {/* result */}
                     {result && status === "done" && (
                         <div className="mt-6 rounded-lg border border-white/10 bg-black/40 backdrop-blur">
                             <div className="p-4 border-b border-white/10">
@@ -352,6 +362,47 @@ export default function ImageSearcher() {
                             </div>
                         </div>
                     )}
+
+                    {searchResults.length > 0 && (
+                        <div className="mt-6 rounded-lg border border-white/10 bg-black/40 backdrop-blur">
+                            <div className="p-4 border-b border-white/10">
+                                <div className="text-base font-medium">Search Results</div>
+                                <div className="text-white/60 text-sm">Top matches found for your screenshot.</div>
+                            </div>
+                            <div className="p-4 space-y-4">
+                                {/* top result */}
+                                {searchResults[0] && (
+                                    <div className="p-4 rounded-lg border border-amber-400/30 bg-amber-400/10">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-sm font-medium text-amber-300">1st Place</span>
+                                            <span className="text-xs text-amber-400/70">Score: {Math.round(searchResults[0].score * 100)}%</span>
+                                        </div>
+                                        <div className="text-2xl font-semibold text-amber-300 tabular-nums">
+                                            {formatTimestampHMS(searchResults[0].metadata.timestamp)}
+                                        </div>
+                                        <div className="text-sm text-white/60 mt-1">
+                                            {searchResults[0].metadata.movieTitle} • {searchResults[0].metadata.director}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* compact display */}
+                                {searchResults.slice(1, 3).map((result, index) => (
+                                    <div key={result.id} className="flex items-center justify-between p-3 rounded-lg border border-white/10 bg-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-sm font-medium text-white/70">#{index + 2}</span>
+                                            <div className="text-lg font-semibold text-white tabular-nums">
+                                                {formatTimestampHMS(result.metadata.timestamp)}
+                                            </div>
+                                        </div>
+                                        <span className="text-xs text-white/60">
+                                            {Math.round(result.score * 100)}% match
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* footer */}
@@ -359,22 +410,22 @@ export default function ImageSearcher() {
                     <div className="text-xs text-white/50">Tip: You can press {"'Cmd/Ctrl + V'"} to paste an image directly from your clipboard.</div>
                     <div className="mt-3 flex gap-2">
                         <button
-                            onClick={() => { }}
-                            disabled={!file || status === "uploading"}
+                            onClick={handleSearch}
+                            disabled={!file || isSearching}
                             className={[
                                 "inline-flex items-center rounded-md bg-amber-400 px-4 py-2 text-sm font-medium text-black hover:bg-amber-300 transition",
                                 "disabled:opacity-60 disabled:cursor-not-allowed",
                             ].join(" ")}
                         >
-                            {status === "uploading" ? (
+                            {isSearching ? (
                                 <>
                                     <Loader2 className="mr-2 size-4 animate-spin" />
-                                    Analyzing...
+                                    Searching...
                                 </>
                             ) : (
                                 <>
                                     <Upload className="mr-2 size-4" />
-                                    Analyze image
+                                    Search image
                                 </>
                             )}
                         </button>
