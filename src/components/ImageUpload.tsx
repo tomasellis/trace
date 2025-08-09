@@ -26,15 +26,37 @@ export default function ImageSearcher() {
     const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle")
     const [progress, setProgress] = useState(0)
     const [result, setResult] = useState<MatchResult | null>(null)
-    const [notice, setNotice] = useState<string | null>(null)
 
     const [samplesOpen, setSamplesOpen] = useState(false)
     const samplesBtnRef = useRef<HTMLButtonElement>(null)
     const samplesPopRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    const [flash, showFlash] = useFlash()
+
+    const handleNewFile = (f: File) => {
+        if (!f.type.startsWith("image/")) {
+            showFlash("Unsupported file. Please choose an image.")
+            return
+        }
+        if (f.size > 10 * 1024 * 1024) {
+            showFlash("File too large. Max size is 10 MB.")
+            return
+        }
+        setFile(f)
+        const url = URL.createObjectURL(f)
+        setPreview((prev) => {
+            if (prev) URL.revokeObjectURL(prev)
+            return url
+        })
+        setResult(null)
+        setStatus("idle")
+    }
+
     // paste support
-    usePaste({ handlePasted: (blob) => { } })
+    usePaste({ handlePasted: handleNewFile, showFlash: () => showFlash("Image pasted. Ready to analyze.") })
+
+
 
     return (<section className="relative border border-white/10 bg-white/5 backdrop-blur rounded-xl">
         <div className="p-5 border-b border-white/10">
@@ -216,9 +238,9 @@ export default function ImageSearcher() {
         </div>
 
         {/* notice pill */}
-        {notice && (
+        {flash && (
             <div className="pointer-events-none absolute right-3 top-3 z-10 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-xs text-white/80 backdrop-blur">
-                {notice}
+                {flash}
             </div>
         )}
     </section>)

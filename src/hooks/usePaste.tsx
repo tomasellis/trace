@@ -1,11 +1,7 @@
 import { useEffect } from "react"
-import useFlash from "./useFlash"
 
 // Paste support
-export default function usePaste({ handlePasted }: { handlePasted: (blob: File) => void }) {
-
-    const [showFlash] = useFlash()
-
+export default function usePaste({ handlePasted, showFlash }: { handlePasted: (blob: File) => void, showFlash: () => void }) {
     return useEffect(() => {
         function onPaste(e: ClipboardEvent) {
             if (!e.clipboardData) return
@@ -15,7 +11,7 @@ export default function usePaste({ handlePasted }: { handlePasted: (blob: File) 
                 const blob = imageItem.getAsFile()
                 if (blob) {
                     handlePasted(blob)
-                    showFlash("Image pasted. Ready to analyze.")
+                    showFlash()
                 }
             }
         }

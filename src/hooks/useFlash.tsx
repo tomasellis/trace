@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-function useFlash() {
+function useFlash(): [string | null, (message: string) => void] {
     const [flash, setFlash] = useState<string | null>(null);
 
     useEffect(() => {
@@ -17,10 +17,7 @@ function useFlash() {
         setFlash(message);
     };
 
-
-    return [
-        showFlash,
-    ]
+    return [flash, showFlash];
 }
 
 export default useFlash;
