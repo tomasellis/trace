@@ -5,7 +5,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { processVideo } from '../utils/videoProcessing';
-
+import { generateScreenshotEmbeddings, searchSimilarFrames } from '../utils/screenshotSearch';
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -70,7 +70,7 @@ router.post('/upload', upload.single('movie'), async (req: Request, res: Respons
             res.status(400).json({ error: 'Movie Title and Director name are required' });
             return;
         }
-        // Use file path and metadata for downstream processing
+
         const framesOutputDir = path.join(__dirname, '../../uploads/frames', path.parse(req.file.filename).name);
         const processedFrames = await processVideo(req.file.path, framesOutputDir, 3);
         res.status(201).json({
@@ -92,7 +92,31 @@ router.post('/upload', upload.single('movie'), async (req: Request, res: Respons
 
 // POST /api/videos/search-screenshot
 router.post('/search-screenshot', screenshotUpload.single('screenshot'), async (req: Request, res: Response) => {
-    //TODO: parse screenshot
+    try {
+        if (!req.file) {
+            res.status(400).json({ error: 'No screenshot file provided' });
+            return;
+        }
+        const limit = parseInt(req.body.limit) || 3;
+        const screenshotEmbeddings = await generateScreenshotEmbeddings(req.file.path);
+        if (!screenshotEmbeddings || screenshotEmbeddings.length === 0) {
+            res.status(500).json({ error: 'Failed to generate embeddings for screenshot' });
+            return;
+        }
+        const { results } = await searchSimilarFrames(screenshotEmbeddings, limit);
+        res.status(200).json({
+            message: 'Search completed successfully',
+            results,
+            searchInfo: {
+                screenshotProcessed: true,
+                embeddingsGenerated: screenshotEmbeddings.length,
+                resultsFound: results.length,
+                searchParameters: { limit }
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error during search', details: error instanceof Error ? error.message : 'Unknown error' });
+    }
 });
 
 export default router; 
