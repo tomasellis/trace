@@ -10,7 +10,40 @@ type MatchResult = {
     confidence: number
 }
 
+interface SearchResult {
+    id: string;
+    score: number;
+    metadata: {
+        movieTitle: string;
+        director: string;
+        movieUrl: string;
+        framePath: string;
+        height: number;
+        createdAt: string;
+        y: number;
+        x: number;
+        width: number;
+        timestamp: number;
+        patchType: string;
+    };
+}
 
+interface SearchResponse {
+    message: string;
+    results: SearchResult[];
+    searchInfo: {
+        screenshotProcessed: boolean;
+        embeddingsGenerated: number;
+        resultsFound: number;
+        searchParameters: {
+            limit: number;
+            threshold: number;
+        };
+    };
+    fallback?: SearchResult[];
+}
+
+const API_URL = import.meta.env.VITE_FULL_API_URL || 'http://localhost:3010';
 
 export default function ImageSearcher() {
     const [file, setFile] = useState<File | null>(null)
@@ -20,6 +53,14 @@ export default function ImageSearcher() {
     const [progress, setProgress] = useState(0)
     const [result, setResult] = useState<MatchResult | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [error, setError] = useState<string | null>(null);
+    const [searchLimit, setSearchLimit] = useState(3);
+    const [selectedResult, setSelectedResult] = useState<SearchResult | null>(null);
+    const [fallbackResults, setFallbackResults] = useState<SearchResult[]>([]);
+
 
     const [flash, showFlash] = useFlash()
 
@@ -96,6 +137,53 @@ export default function ImageSearcher() {
             showFlash("Failed to load sample.")
         }
     }
+
+    /**
+     * Perform screenshot search
+     */
+    const handleSearch = useCallback(async () => {
+        if (!file) {
+            setError('Please select a screenshot first');
+            return;
+        }
+
+        setIsSearching(true);
+        setError(null);
+        setSearchResults([]);
+        setFallbackResults([]);
+
+        try {
+            const formData = new FormData();
+            formData.append('screenshot', file);
+            formData.append('limit', searchLimit.toString());
+
+            console.log('[ScreenshotSearch] Request:', {
+                fileName: file.name,
+                limit: searchLimit
+            });
+
+            const response = await fetch(`${API_URL}/api/videos/search-screenshot`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('[ScreenshotSearch] Error response:', errorData);
+                throw new Error(errorData.error || 'Search failed');
+            }
+
+            const data: SearchResponse = await response.json();
+            console.log('[ScreenshotSearch] Response:', data);
+            setSearchResults(data.results);
+            setFallbackResults(data.fallback || []);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Search failed');
+            console.error('[ScreenshotSearch] Fetch error:', err);
+        } finally {
+            setIsSearching(false);
+        }
+    }, [file, searchLimit, API_URL]);
 
     const dropClasses = useMemo(
         () =>
@@ -255,7 +343,7 @@ export default function ImageSearcher() {
                                         Copy timestamp
                                     </button>
                                     <button
-                                        onClick={() => setResult(null)}
+                                        onClick={() => handleSearch()}
                                         className="inline-flex items-center rounded-md border border-amber-400/30 px-3 py-1.5 text-sm font-medium text-amber-300 hover:bg-amber-400/10 transition"
                                     >
                                         Analyze another
