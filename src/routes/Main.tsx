@@ -1,4 +1,5 @@
 import CinemaBackground from "../components/CinemaBackground";
+import ImageSearcher from "../components/ImageUpload";
 
 export default function Main() {
     return (
@@ -17,6 +18,8 @@ export default function Main() {
                             Paste, drop, or browse an image. We&apos;ll analyze it and return the timestamp in the movie.
                         </p>
                     </header>
+
+                    <ImageSearcher />
 
                     <footer className="mt-6 text-[11px] text-white/40">
                         Tip: for best results, use a full screen frame.
