@@ -1,5 +1,7 @@
 import { Copy, ImageIcon, Loader2, Upload, X } from "lucide-react"
 import { useRef, useState } from "react"
+import usePaste from "../hooks/usePaste"
+import useFlash from "../hooks/useFlash"
 
 type MatchResult = {
     timestampSeconds: number
@@ -31,6 +33,8 @@ export default function ImageSearcher() {
     const samplesPopRef = useRef<HTMLDivElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    // paste support
+    usePaste({ handlePasted: (blob) => { } })
 
     return (<section className="relative border border-white/10 bg-white/5 backdrop-blur rounded-xl">
         <div className="p-5 border-b border-white/10">
