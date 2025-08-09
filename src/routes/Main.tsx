@@ -19,7 +19,7 @@ export default function Main() {
                     </header>
 
                     <footer className="mt-6 text-[11px] text-white/40">
-                        Tip: for best results, use clear frames without heavy motion blur.
+                        Tip: for best results, use a full screen frame.
                     </footer>
                 </div>
             </main>
