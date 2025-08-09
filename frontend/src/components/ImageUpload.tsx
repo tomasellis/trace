@@ -109,6 +109,7 @@ export default function ImageSearcher() {
         setResult(null)
         setStatus("idle")
         setProgress(0)
+        setSearchResults([])
         if (preview) {
             URL.revokeObjectURL(preview)
             setPreview(null)
