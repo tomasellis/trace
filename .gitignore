@@ -29,3 +29,5 @@ uploads
 uploads/*
 
 chroma_db
+
+__pycache__
