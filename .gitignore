@@ -27,3 +27,5 @@ dist-ssr
 
 uploads
 uploads/*
+
+chroma_db
