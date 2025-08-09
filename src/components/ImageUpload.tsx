@@ -1,5 +1,5 @@
 import { Copy, ImageIcon, Loader2, Upload, X } from "lucide-react"
-import { useRef, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import usePaste from "../hooks/usePaste"
 import useFlash from "../hooks/useFlash"
 
@@ -56,7 +56,52 @@ export default function ImageSearcher() {
     // paste support
     usePaste({ handlePasted: handleNewFile, showFlash: () => showFlash("Image pasted. Ready to analyze.") })
 
+    const onDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setDragActive(false)
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            handleNewFile(e.dataTransfer.files[0])
+        }
+    }, [])
 
+    const onDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (!dragActive) setDragActive(true)
+    }
+    const onDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setDragActive(false)
+    }
+
+    const onBrowseClick = () => fileInputRef.current?.click()
+
+    const onReset = () => {
+        setFile(null)
+        setResult(null)
+        setStatus("idle")
+        setProgress(0)
+        if (preview) {
+            URL.revokeObjectURL(preview)
+            setPreview(null)
+        }
+        if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+
+    const dropClasses = useMemo(
+        () =>
+            [
+                "relative flex items-center justify-center w-full rounded-lg border border-dashed transition",
+                "h-[320px] md:h-[360px]",
+                dragActive
+                    ? "border-amber-400/60 bg-amber-400/[0.06] shadow-[0_0_0_4px_rgba(245,158,11,0.08)]"
+                    : "border-white/20 hover:border-amber-400/60 hover:bg-amber-400/[0.06] hover:shadow-[0_0_0_4px_rgba(245,158,11,0.08)]",
+                "cursor-pointer overflow-hidden bg-transparent",
+            ].join(" "),
+        [dragActive]
+    )
 
     return (<section className="relative border border-white/10 bg-white/5 backdrop-blur rounded-xl">
         <div className="p-5 border-b border-white/10">
@@ -70,20 +115,20 @@ export default function ImageSearcher() {
                 role="button"
                 aria-label="Image dropzone"
                 tabIndex={0}
-                onClick={() => { }}
+                onClick={onBrowseClick}
                 onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") "browse()"
                 }}
-                onDrop={() => { }}
-                onDragOver={() => { }}
-                onDragLeave={() => { }}
-                className={""}
+                onDrop={onDrop}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                className={dropClasses}
             >
                 {/* Selected image fills the box */}
                 {preview && (
                     <>
                         <img
-                            src={preview || "/placeholder.svg?height=360&width=640&query=selected%20image"}
+                            src={preview}
                             alt="Selected image"
                             className="absolute inset-0 h-full w-full object-contain"
                             aria-live="polite"
@@ -102,6 +147,7 @@ export default function ImageSearcher() {
                             type="button"
                             onClick={(e) => {
                                 e.stopPropagation()
+                                onReset()
                             }}
                             aria-label="Remove image"
                             className="absolute left-2 top-2 inline-flex items-center justify-center rounded-md border border-white/10 bg-white/10 px-2 py-1 text-white/80 hover:text-white hover:bg-white/20 transition"
@@ -132,7 +178,7 @@ export default function ImageSearcher() {
                     aria-label="Choose image file"
                     onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
-                            //handle new file
+                            handleNewFile(e.target.files[0])
                         }
                     }}
                 />
