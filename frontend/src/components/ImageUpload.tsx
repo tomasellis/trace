@@ -376,7 +376,7 @@ export default function ImageSearcher() {
                                     <div className="p-4 rounded-lg border border-amber-400/30 bg-amber-400/10">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-sm font-medium text-amber-300">1st Place</span>
-                                            <span className="text-xs text-amber-400/70">Score: {Math.round(searchResults[0].score * 100)}%</span>
+                                            <span className="text-xs text-amber-400/70">Score: {((1 - searchResults[0].score) * 100).toFixed(2)}%</span>
                                         </div>
                                         <div className="text-2xl font-semibold text-amber-300 tabular-nums">
                                             {formatTimestampHMS(searchResults[0].metadata.timestamp)}
@@ -397,7 +397,7 @@ export default function ImageSearcher() {
                                             </div>
                                         </div>
                                         <span className="text-xs text-white/60">
-                                            {Math.round(result.score * 100)}% match
+                                            {((1 - result.score) * 100).toFixed(2)}% match
                                         </span>
                                     </div>
                                 ))}
