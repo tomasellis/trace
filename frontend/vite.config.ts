@@ -9,7 +9,7 @@ dotenv.config({ path: '../.env' }); // Adjust path as needed
 export default defineConfig(({ mode }) => {
 
   const env = loadEnv(mode, process.cwd());
-  const API_URL = `${env.VITE_API_URL ?? 'http://localhost:3010'}`;
+  const API_URL = `${env.VITE_FULL_API_URL ?? 'http://localhost:8080'}`;
   const PORT = `${env.VITE_API_PORT ?? '3010'}`;
 
   return {
